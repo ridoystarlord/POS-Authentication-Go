@@ -1,0 +1,151 @@
+basePath: /
+definitions:
+  models.Book:
+    properties:
+      author:
+        type: string
+      title:
+        type: string
+    type: object
+  models.Credential:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  models.User:
+    properties:
+      credential:
+        $ref: '#/definitions/models.Credential'
+      name:
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact: {}
+  description: This is a sample swagger for simple book api
+  title: Book API
+  version: "1.0"
+paths:
+  /api/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login
+      parameters:
+      - description: Login
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.Credential'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Login
+      tags:
+      - Authentication
+  /api/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user
+      parameters:
+      - description: Register
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Create user
+      tags:
+      - Authentication
+  /api/book:
+    get:
+      consumes:
+      - application/json
+      description: Get all the books from the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Book'
+            type: array
+      summary: List of books
+      tags:
+      - Books
+  /api/book/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a single book from the database
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Delete book by id
+      tags:
+      - Books
+    get:
+      consumes:
+      - application/json
+      description: Read a single book from the database
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Book'
+      summary: Get book by id
+      tags:
+      - Books
+  /api/book/new:
+    post:
+      consumes:
+      - application/json
+      description: Create a new book
+      parameters:
+      - description: Book
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.Book'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: error
+          schema:
+            type: string
+      summary: Create book
+      tags:
+      - Books
+swagger: "2.0"

@@ -16,7 +16,8 @@ import (
 //	@Param			request	body	models.Book	true	"Book"
 //	@Success		200
 //	@failure		400	{string}	string	"error"
-//	@Router			/api/book/new [post]
+//	@Router			/book/new [post]
+//	@Security		BearerAuth
 func  CreateBook(c *fiber.Ctx) error {
 	var book models.Book
 	err := c.BodyParser(&book)
@@ -42,7 +43,8 @@ func  CreateBook(c *fiber.Ctx) error {
 //	@Produce		json
 //	@Param			id	path	int	true	"Book ID"
 //	@Success		200	
-//	@Router			/api/book/{id} [delete]
+//	@Router			/book/{id} [delete]
+//	@Security		BearerAuth
 func  DeleteBook(c *fiber.Ctx) error {
 	var book models.Book
 	id := c.Params("id")
@@ -62,7 +64,8 @@ func  DeleteBook(c *fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Success		200	{array}	models.Book
-//	@Router			/api/book [get]
+//	@Router			/book [get]
+//	@Security		BearerAuth
 func  GetBook(c *fiber.Ctx) error {
 	var books []models.Book
 	err := storage.DB.Find(&books).Error
@@ -83,7 +86,8 @@ func  GetBook(c *fiber.Ctx) error {
 //	@Produce		json
 //	@Param			id	path		int	true	"Book ID"
 //	@Success		200	{object}	models.Book
-//	@Router			/api/book/{id} [get]
+//	@Router			/book/{id} [get]
+//	@Security		BearerAuth
 func  GetBookById(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var book models.Book

@@ -16,7 +16,7 @@ import (
 //	@Produce		json
 //	@Param			request	body	models.Credential	true	"Login"
 //	@Success		200
-//	@Router			/api/auth/login [post]
+//	@Router			/api/v1/auth/login [post]
 func  Login(c *fiber.Ctx) error {
 	var credentials models.Credential
 	err := c.BodyParser(&credentials)
@@ -46,7 +46,7 @@ func  Login(c *fiber.Ctx) error {
 //	@Produce		json
 //	@Param			request	body	models.User	true	"Register"
 //	@Success		200
-//	@Router			/api/auth/register [post]
+//	@Router			/api/v1/auth/register [post]
 func  Register(c *fiber.Ctx) error {
 	var payload models.User
 	err := c.BodyParser(&payload)

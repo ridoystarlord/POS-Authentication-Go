@@ -1,4 +1,3 @@
-basePath: /
 definitions:
   models.Book:
     properties:
@@ -21,14 +20,19 @@ definitions:
       name:
         type: string
     type: object
-host: localhost:8000
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
 info:
   contact: {}
   description: This is a sample swagger for simple book api
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
   title: Book API
   version: "1.0"
 paths:
-  /api/auth/login:
+  /api/v1/auth/login:
     post:
       consumes:
       - application/json
@@ -48,7 +52,7 @@ paths:
       summary: Login
       tags:
       - Authentication
-  /api/auth/register:
+  /api/v1/auth/register:
     post:
       consumes:
       - application/json
@@ -68,7 +72,7 @@ paths:
       summary: Create user
       tags:
       - Authentication
-  /api/book:
+  /book:
     get:
       consumes:
       - application/json
@@ -82,10 +86,12 @@ paths:
             items:
               $ref: '#/definitions/models.Book'
             type: array
+      security:
+      - BearerAuth: []
       summary: List of books
       tags:
       - Books
-  /api/book/{id}:
+  /book/{id}:
     delete:
       consumes:
       - application/json
@@ -101,6 +107,8 @@ paths:
       responses:
         "200":
           description: OK
+      security:
+      - BearerAuth: []
       summary: Delete book by id
       tags:
       - Books
@@ -121,10 +129,12 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/models.Book'
+      security:
+      - BearerAuth: []
       summary: Get book by id
       tags:
       - Books
-  /api/book/new:
+  /book/new:
     post:
       consumes:
       - application/json
@@ -145,7 +155,14 @@ paths:
           description: error
           schema:
             type: string
+      security:
+      - BearerAuth: []
       summary: Create book
       tags:
       - Books
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

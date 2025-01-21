@@ -4,12 +4,14 @@
         "description": "This is a sample swagger for simple book api",
         "title": "Book API",
         "contact": {},
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
         "version": "1.0"
     },
-    "host": "localhost:8000",
-    "basePath": "/",
     "paths": {
-        "/api/auth/login": {
+        "/api/v1/auth/login": {
             "post": {
                 "description": "Login",
                 "consumes": [
@@ -40,7 +42,7 @@
                 }
             }
         },
-        "/api/auth/register": {
+        "/api/v1/auth/register": {
             "post": {
                 "description": "Create a new user",
                 "consumes": [
@@ -71,8 +73,13 @@
                 }
             }
         },
-        "/api/book": {
+        "/book": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get all the books from the database",
                 "consumes": [
                     "application/json"
@@ -97,8 +104,13 @@
                 }
             }
         },
-        "/api/book/new": {
+        "/book/new": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Create a new book",
                 "consumes": [
                     "application/json"
@@ -134,8 +146,13 @@
                 }
             }
         },
-        "/api/book/{id}": {
+        "/book/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Read a single book from the database",
                 "consumes": [
                     "application/json"
@@ -166,6 +183,11 @@
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Delete a single book from the database",
                 "consumes": [
                     "application/json"
@@ -228,5 +250,16 @@
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    },
+    "externalDocs": {
+        "description": "OpenAPI",
+        "url": "https://swagger.io/resources/open-api/"
     }
 }

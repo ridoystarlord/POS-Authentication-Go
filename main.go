@@ -17,11 +17,18 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
-//	@title			Book API
-//	@version		1.0
-//	@description	This is a sample swagger for simple book api
-//	@host			localhost:8000
-//	@BasePath		/
+//	@title						Book API
+//	@version					1.0
+//	@description				This is a sample swagger for simple book api
+//	@license.name				Apache 2.0
+//	@license.url				http://www.apache.org/licenses/LICENSE-2.0.html
+//	@externalDocs.description	OpenAPI
+//	@externalDocs.url			https://swagger.io/resources/open-api/
+//	@securityDefinitions.apikey	BearerAuth
+//	@in							header
+//	@name						Authorization
+//	@host						localhost:8000
+//	@BasePath					/api/v1
 func main() {
 	var config storage.Config
 
@@ -48,6 +55,6 @@ func main() {
 	})
 
 	routes.SetupRoutes(app)
-fmt.Println("Server running on port 8000")
+	fmt.Println("Server running on port 8000")
 	app.Listen(":8000")
 }

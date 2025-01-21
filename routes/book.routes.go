@@ -9,6 +9,6 @@ import (
 func SetupBookRoutes(route fiber.Router) {
 	route.Post("/new", controllers.CreateBook)
 	route.Delete("/:id", controllers.DeleteBook)
-	route.Get("/", controllers.GetBook)
+	route.Get("/",  controllers.GetBook)
 	route.Get("/:id", controllers.GetBookById)
 }

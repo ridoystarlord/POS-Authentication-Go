@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"authentication/Responses"
+	"authentication/storage"
 	"authentication/utils"
 	"strings"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func IsAuthenticated(c *fiber.Ctx) error {
+func IsAuthenticated(c *fiber.Ctx) error { //
 	// Get the token from the Authorization header
 	tokenString := c.Get("Authorization")
 	if tokenString == "" {
@@ -23,7 +24,8 @@ func IsAuthenticated(c *fiber.Ctx) error {
 		tokenString = tokenString[7:]
 	}
 	// Parse the token
-	token, err := utils.VerifyAccessToken(tokenString)
+	secret := storage.Config.JWTAccessSecret
+	token, err := utils.VerifyToken(tokenString, storage.Config.JWTAccessSecret)
 
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -44,7 +46,7 @@ func IsAuthenticated(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-func JWTMiddleware(c *fiber.Ctx) error {
+func IsAuthorized(c *fiber.Ctx) error {
 	// Get the token from the Authorization header
 	tokenString := c.Get("Authorization")
 	if tokenString == "" {

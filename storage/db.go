@@ -9,12 +9,16 @@ import (
 )
 
 type Config struct {
-	Host     string `env:"HOST" env-default:"localhost"`
-	Port     string `env:"PORT" env-default:"5432"`
-	User     string `env:"USER"`
-	Password string `env:"PASSWORD"`
-	DBName   string `env:"DB_NAME"`
-	SSLMode  string `env:"SSL_MODE" env-default:"disable"`
+	Host             string `env:"HOST" env-default:"localhost"`
+	Port             string `env:"PORT" env-default:"5432"`
+	User             string `env:"USER"`
+	Password         string `env:"PASSWORD"`
+	DBName           string `env:"DB_NAME"`
+	SSLMode          string `env:"SSL_MODE" env-default:"disable"`
+	JWTAccessSecret  string `env:"JWT_ACCESS_SECRET"`
+	JWTRefreshSecret string `env:"JWT_REFRESH_SECRET"`
+	JWTAccessExp     string `env:"JWT_ACCESS_TOKEN_EXPIRY"`
+	JWTRefreshExp    string `env:"JWT_REFRESH_TOKEN_EXPIRY"`
 }
 
 var DB *gorm.DB

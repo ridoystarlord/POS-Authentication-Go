@@ -10,5 +10,5 @@ import (
 func SetupAuthRoutes(route fiber.Router) {
 	route.Post("/login", controllers.Login)
 	route.Post("/register", controllers.Register)
-	route.Get("/refresh", middleware.JWTMiddleware, controllers.Refresh)
+	route.Get("/refresh", middleware.IsAuthorized, controllers.Refresh)
 }

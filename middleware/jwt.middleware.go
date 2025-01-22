@@ -2,8 +2,9 @@ package middleware
 
 import (
 	"authentication/Responses"
-	"authentication/storage"
+	"authentication/config"
 	"authentication/utils"
+	"log"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,18 +15,20 @@ func IsAuthenticated(c *fiber.Ctx) error { //
 	// Get the token from the Authorization header
 	tokenString := c.Get("Authorization")
 	if tokenString == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Unauthorized",
-		})
+		return Responses.Unauthenticated(c)
 	}
 
 	// Remove "Bearer " prefix if present
 	if len(tokenString) > 7 && tokenString[:7] == "Bearer " {
 		tokenString = tokenString[7:]
 	}
+	// Load configuration
+	config, err := config.GetConfig()
+	if err != nil {
+		log.Fatalf("failed to load configuration: %v", err)
+	}
 	// Parse the token
-	secret := storage.Config.JWTAccessSecret
-	token, err := utils.VerifyToken(tokenString, storage.Config.JWTAccessSecret)
+	token, err := utils.VerifyToken(tokenString, config.JWTAccessSecret)
 
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -41,7 +44,6 @@ func IsAuthenticated(c *fiber.Ctx) error { //
 			"error": "Invalid token claims",
 		})
 	}
-	// fmt.Println("Token is valid")
 
 	return c.Next()
 }
@@ -55,8 +57,14 @@ func IsAuthorized(c *fiber.Ctx) error {
 
 	// Remove "Bearer " prefix if present
 	tokenString = strings.Replace(tokenString, "Bearer ", "", 1)
+
+	// Load configuration
+	config, err := config.GetConfig()
+	if err != nil {
+		log.Fatalf("failed to load configuration: %v", err)
+	}
 	// Parse the token
-	token, err := utils.VerifyRefreshToken(tokenString)
+	token, err := utils.VerifyToken(tokenString,config.JWTRefreshSecret)
 
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -72,7 +80,6 @@ func IsAuthorized(c *fiber.Ctx) error {
 			"error": "Invalid token claims",
 		})
 	}
-	// fmt.Println("Token is valid")
 
 	return c.Next()
 }

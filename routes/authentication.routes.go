@@ -2,6 +2,7 @@ package routes
 
 import (
 	"authentication/controllers"
+	"authentication/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -9,4 +10,5 @@ import (
 func SetupAuthRoutes(route fiber.Router) {
 	route.Post("/login", controllers.Login)
 	route.Post("/register", controllers.Register)
+	route.Get("/refresh", middleware.JWTMiddleware, controllers.Refresh)
 }

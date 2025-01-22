@@ -25,7 +25,7 @@ func IsAuthenticated(c *fiber.Ctx) error { //
 	}
 	// Parse the token
 	secret := storage.Config.JWTAccessSecret
-	token, err := utils.VerifyToken(tokenString, storage.Config.JWTAccessSecret)
+	token, err := utils.VerifyToken(tokenString, secret)
 
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{

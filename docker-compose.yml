@@ -1,0 +1,12 @@
+services:
+  app:
+    image: ridoystarlord/pos-authentication-backend
+    container_name: pos-authentication
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - database

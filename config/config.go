@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/ilyakaznacheev/cleanenv"
-	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -29,15 +28,21 @@ var (
 func GetConfig() (*Config, error) {
 	var err error
 	once.Do(func() {
-		// Load the .env file into the system environment
-		err = godotenv.Load()
+		cfg = &Config{}
+
+		// Read configuration from a .env file
+		err = cleanenv.ReadConfig(".env", cfg)
 		if err != nil {
-			fmt.Println("No .env file found or error loading it:", err)
+			fmt.Println("Error reading config file:", err)
+			return
 		}
 
-		// Initialize and populate the configuration struct
-		cfg = &Config{}
+		// Validate and populate any remaining env-based values
 		err = cleanenv.ReadEnv(cfg)
+		if err != nil {
+			fmt.Println("Error reading environment variables:", err)
+		}
 	})
+	// fmt.Printf("Loaded Config: %+v\n", cfg)
 	return cfg, err
 }

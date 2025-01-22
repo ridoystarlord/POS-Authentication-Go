@@ -1,8 +1,8 @@
 package controllers
 
 import (
+	DBManager "authentication/Database"
 	"authentication/models"
-	"authentication/storage"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -25,7 +25,7 @@ func  CreateBook(c *fiber.Ctx) error {
 		 c.JSON(&fiber.Map{"message":"Unable to parse body"})
 		 return err
 	}
-	err=storage.DB.Create(&book).Error
+	err=DBManager.DB.Create(&book).Error
 	if err != nil {
 		c.JSON(&fiber.Map{"message":"Unable to create book"})
 		 return err
@@ -48,7 +48,7 @@ func  CreateBook(c *fiber.Ctx) error {
 func  DeleteBook(c *fiber.Ctx) error {
 	var book models.Book
 	id := c.Params("id")
-	err := storage.DB.Delete(&book,id).Error
+	err := DBManager.DB.Delete(&book,id).Error
 	if err != nil {
 		c.JSON(&fiber.Map{"message":"Unable to delete book"})
 		 return err
@@ -68,7 +68,7 @@ func  DeleteBook(c *fiber.Ctx) error {
 //	@Security		BearerAuth
 func  GetBook(c *fiber.Ctx) error {
 	var books []models.Book
-	err := storage.DB.Find(&books).Error
+	err := DBManager.DB.Find(&books).Error
 	if err != nil {
 		c.JSON(&fiber.Map{"message":"Unable to get books"})
 		 return err
@@ -91,7 +91,7 @@ func  GetBook(c *fiber.Ctx) error {
 func  GetBookById(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var book models.Book
-	err := storage.DB.First(&book, id).Error
+	err := DBManager.DB.First(&book, id).Error
 	if err != nil {
 		c.JSON(&fiber.Map{"message":"Unable to get book"})
 		 return err

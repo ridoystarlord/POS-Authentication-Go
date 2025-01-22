@@ -1,9 +1,9 @@
 package controllers
 
 import (
+	DBManager "authentication/Database"
 	"authentication/Responses"
 	"authentication/models"
-	"authentication/storage"
 	"authentication/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -31,7 +31,7 @@ func Login(c *fiber.Ctx) error {
 		c.JSON(&fiber.Map{"message": "Unable to parse body"})
 		return err
 	}
-	err = storage.DB.Where("username = ?", credentials.Username).First(&credentials).Error
+	err = DBManager.DB.Where("username = ?", credentials.Username).First(&credentials).Error
 	if err != nil {
 		c.JSON(&fiber.Map{"message": "Unable to find user"})
 		return err
@@ -71,7 +71,7 @@ func Register(c *fiber.Ctx) error {
 		return err
 	}
 	payload.Credential.Password = utils.HashPassword(payload.Credential.Password)
-	err = storage.DB.Create(&payload).Error
+	err = DBManager.DB.Create(&payload).Error
 	if err != nil {
 		c.JSON(&fiber.Map{"message": "Unable to create user"})
 		return err

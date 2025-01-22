@@ -1,9 +1,10 @@
 package main
 
 import (
+	DBManager "authentication/Database"
+	"authentication/config"
 	_ "authentication/docs"
 	"authentication/routes"
-	"authentication/storage"
 	"fmt"
 	"log"
 
@@ -14,7 +15,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/gofiber/swagger"
-	"github.com/ilyakaznacheev/cleanenv"
 )
 
 // @title						Book API
@@ -30,15 +30,14 @@ import (
 // @host						localhost:8000
 // @BasePath					/api/v1
 func main() {
-	var config storage.Config
-
 	// Load configuration
-	if err := cleanenv.ReadConfig(".env", &config); err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
+	config, err := config.GetConfig()
+	if err != nil {
+		log.Fatalf("failed to load configuration: %v", err)
 	}
 	// Connect to the database
-	storage.ConnectDatabase(&config)
-	storage.MigrateDB(storage.DB)
+	DBManager.ConnectDatabase(config)
+	DBManager.MigrateDB(DBManager.DB)
 	app := fiber.New()
 	app.Use(cors.New())
 	app.Use(helmet.New())

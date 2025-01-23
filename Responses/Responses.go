@@ -16,21 +16,21 @@ func Get(c *fiber.Ctx, resource string, data interface{}) {
 	if fmt.Sprint(data) == "[]" {
 		data = []interface{}{}
 	}
-	c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "message": msg, "statusCode": fiber.StatusOK, "result": data})
+	c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "message": msg, "statusCode": fiber.StatusOK, "data": data})
 }
 
 func ResourceAlreadyExist(c *fiber.Ctx, resource string, data interface{}) error {
 	msg := resource + " has not been saved because this " + resource + " already exist!"
-	return c.Status(fiber.StatusConflict).JSON(fiber.Map{"success": false, "message": msg, "statusCode": fiber.StatusConflict, "result": data})
+	return c.Status(fiber.StatusConflict).JSON(fiber.Map{"success": false, "message": msg, "statusCode": fiber.StatusConflict, "data": data})
 }
 
 func NotFound(c *fiber.Ctx, resource string) error {
 	msg := "Requested " + resource + " is not found!"
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"success": false, "message": msg, "statusCode": fiber.StatusNotFound, "result": nil})
+	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"success": false, "message": msg, "statusCode": fiber.StatusNotFound, "data": nil})
 }
 
 func ValidationError(c *fiber.Ctx, errs interface{}) error {
-	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Validation error", "statusCode": fiber.StatusBadRequest, "result": errs})
+	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Validation error", "statusCode": fiber.StatusBadRequest, "data": errs})
 }
 
 func BadRequest(c *fiber.Ctx, msg string) error {
@@ -40,6 +40,10 @@ func BadRequest(c *fiber.Ctx, msg string) error {
 func SomethingGoneWrong(c *fiber.Ctx) error {
 	msg := "Something gone wrong please try again later"
 	return c.Status(fiber.StatusGone).JSON(fiber.Map{"success": false, "statusCode": fiber.StatusGone, "message": msg})
+}
+func InternalServerError(c *fiber.Ctx) error {
+	msg := "Internal Server Error"
+	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "statusCode": fiber.StatusInternalServerError, "message": msg})
 }
 
 func Unauthorized(c *fiber.Ctx) error {
@@ -59,5 +63,5 @@ func NotAllowed(c *fiber.Ctx) error {
 
 // Custom response
 func Response(c *fiber.Ctx, statusCode int, success bool, msg string, data interface{}) {
-	c.Status(statusCode).JSON(fiber.Map{"success": success, "message": msg, "result": data})
+	c.Status(statusCode).JSON(fiber.Map{"success": success, "statusCode": statusCode, "message": msg, "data": data})
 }

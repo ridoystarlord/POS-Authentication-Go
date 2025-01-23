@@ -3,21 +3,11 @@ package controllers
 import (
 	DBManager "authentication/Database"
 	"authentication/Responses"
-	"authentication/config"
 	"authentication/models"
 	"authentication/utils"
-	"fmt"
-	"log"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 )
-
-type TokenResponse struct {
-	AccessToken  string `json:"access-token"`
-	RefreshToken string `json:"refresh-token"`
-}
 
 //	 ListBooks godoc
 //		@Summary		Login
@@ -33,50 +23,30 @@ func Login(c *fiber.Ctx) error {
 	var user models.Credential
 	err := c.BodyParser(&credentials)
 	if err != nil {
-		c.JSON(&fiber.Map{"message": "Unable to parse body"})
-		return err
+		return Responses.BadRequest(c, "Unable to parse body")
 	}
 
 	err = DBManager.DB.Where("username = ?", credentials.Username).First(&user).Error
 	if err != nil {
-		c.JSON(&fiber.Map{"message": "Invalid Credentials"})
-		return err
+		return Responses.Unauthorized(c)
 	}
 	if ok := utils.ComparePassword(user.Password, credentials.Password); !ok {
-		return c.JSON(&fiber.Map{"message": "Invalid Credentials"})
+		return Responses.Unauthorized(c)
 	}
 
-	config, err := config.GetConfig()
+	data := map[string]interface{}{}
+	accessToken, refreshToken, err := utils.GenerateTokenPair(credentials.UserID)
 	if err != nil {
-		log.Fatalf("failed to load configuration: %v", err)
-	}
-	accessTokenDuration, err := strconv.Atoi(config.JWTAccessExp)
-	if err != nil {
-		log.Fatalf("Invalid env format: %v", err)
-	}
-	fmt.Println(accessTokenDuration)
-	accessToken, err := utils.CreateToken(credentials.UserID, accessTokenDuration, config.JWTAccessSecret)
-	if err != nil {
-		c.JSON(&fiber.Map{"message": "Unable to create token"})
-		return err
+		return Responses.SomethingGoneWrong(c)
 	}
 
-	refreshTokenDuration, err := strconv.Atoi(config.JWTRefreshExp)
-	if err != nil {
-		log.Fatalf("Invalid env format: %v", err)
-	}
-	refreshToken, err := utils.CreateToken(credentials.UserID, refreshTokenDuration, config.JWTRefreshSecret)
-	if err != nil {
-		c.JSON(&fiber.Map{"message": "Unable to create token"})
-		return err
-	}
+	data["accessToken"] = accessToken
+	data["refreshToken"] = refreshToken
+	data["warehouseId"] = ""
+	data["organizationId"] = ""
+	data["type"] = ""
 
-	token := &TokenResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}
-	// c.JSON(&fiber.Map{"message": "Login successful", "token": token})
-	Responses.Response(c, 200, true, "Login Successfully", token)
+	Responses.Response(c, 200, true, "Login Successfully", data)
 	return nil
 }
 
@@ -102,40 +72,25 @@ func Register(c *fiber.Ctx) error {
 		c.JSON(&fiber.Map{"message": "Unable to create user"})
 		return err
 	}
-	c.JSON(&fiber.Map{"message": "User created successfully"})
+	Responses.Created(c, "user", nil)
 	return nil
 }
 
-func Refresh(c *fiber.Ctx) error {
-	tokenString := c.Get("Authorization")[7:]
-	user := c.Locals("user")
-	if user == nil {
-		return Responses.Unauthorized(c)
-	}
-	claims, ok := user.(jwt.MapClaims)
-	if !ok {
-		return Responses.Unauthorized(c)
-	}
+func RefreshToken(c *fiber.Ctx) error {
+	payload := c.Locals("payload")
 
-	config, err := config.GetConfig()
-	if err != nil {
-		log.Fatalf("failed to load configuration: %v", err)
-	}
-	accessTokenDuration, err := strconv.Atoi(config.JWTAccessExp)
-	if err != nil {
-		log.Fatalf("Invalid env format: %v", err)
-	}
+	userId := payload.(float64)
+	data := map[string]interface{}{}
 
-	id := claims["id"].(float64)
-	newAccessToken, err := utils.CreateToken(uint(id), accessTokenDuration, config.JWTAccessSecret)
+	accessToken, refreshToken, err := utils.GenerateTokenPair(uint(userId))
 	if err != nil {
-		c.JSON(&fiber.Map{"message": "Unable to create user"})
-		return err
+		return Responses.InternalServerError(c)
 	}
-	token := &TokenResponse{
-		AccessToken:  newAccessToken,
-		RefreshToken: tokenString,
-	}
-	c.JSON(&fiber.Map{"message": "Refresh successful", "token": token})
+	data["accessToken"] = accessToken
+	data["refreshToken"] = refreshToken
+	data["warehouseId"] = ""
+	data["organizationId"] = ""
+	data["type"] = ""
+	Responses.Response(c, 200, true, "Access Token Refreshed", data)
 	return nil
 }

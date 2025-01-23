@@ -37,13 +37,16 @@ func IsAuthenticated(c *fiber.Ctx) error { //
 	}
 
 	// Attach token claims to the context for future use
-	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		c.Locals("user", claims)
-	} else {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Invalid token claims",
-		})
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return Responses.Unauthorized(c)
 	}
+
+	userId := claims["id"]
+	if userId == nil {
+		return Responses.Unauthorized(c)
+	}
+	c.Locals("payload", userId)
 
 	return c.Next()
 }
@@ -72,13 +75,17 @@ func IsAuthorized(c *fiber.Ctx) error {
 	}
 
 	// Attach token claims to the context for future use
-	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		c.Locals("user", claims)
-	} else {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Invalid token claims",
-		})
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return Responses.Unauthorized(c)
 	}
+
+	userId := claims["id"]
+	if userId == nil {
+		return Responses.Unauthorized(c)
+	}
+	c.Locals("payload", userId)
 
 	return c.Next()
 }

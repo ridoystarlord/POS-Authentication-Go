@@ -1,11 +1,19 @@
 package utils
 
 import (
+	"authentication/config"
 	"fmt"
+	"log"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+type tokenPair struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+}
 
 func CreateToken(id uint, exp int, secret string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
@@ -35,4 +43,29 @@ func VerifyToken(tokenString string, secret string) (*jwt.Token, error) {
 	}
 
 	return token, nil
+}
+
+func GenerateTokenPair(id uint) (string, string, error) {
+	config, err := config.GetConfig()
+	if err != nil {
+		log.Fatalf("failed to load configuration: %v", err)
+	}
+	accessTokenDuration, err := strconv.Atoi(config.JWTAccessExp)
+	if err != nil {
+		log.Fatalf("Invalid env format: %v", err)
+	}
+	accessToken, err := CreateToken(id, accessTokenDuration, config.JWTAccessSecret)
+	if err != nil {
+		return "", "", err
+	}
+	refreshTokenDuration, err := strconv.Atoi(config.JWTRefreshExp)
+	if err != nil {
+		log.Fatalf("Invalid env format: %v", err)
+	}
+	refreshToken, err := CreateToken(id, refreshTokenDuration, config.JWTRefreshSecret)
+	if err != nil {
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
 }

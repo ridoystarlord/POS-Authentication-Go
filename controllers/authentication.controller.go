@@ -3,8 +3,12 @@ package controllers
 import (
 	DBManager "authentication/Database"
 	"authentication/Responses"
+	"authentication/config"
 	"authentication/models"
 	"authentication/utils"
+	"fmt"
+	"log"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -26,31 +30,53 @@ type TokenResponse struct {
 //		@Router			/api/v1/auth/login [post]
 func Login(c *fiber.Ctx) error {
 	var credentials models.Credential
+	var user models.Credential
 	err := c.BodyParser(&credentials)
 	if err != nil {
 		c.JSON(&fiber.Map{"message": "Unable to parse body"})
 		return err
 	}
-	err = DBManager.DB.Where("username = ?", credentials.Username).First(&credentials).Error
+
+	err = DBManager.DB.Where("username = ?", credentials.Username).First(&user).Error
 	if err != nil {
-		c.JSON(&fiber.Map{"message": "Unable to find user"})
+		c.JSON(&fiber.Map{"message": "Invalid Credentials"})
 		return err
 	}
-	accessToken, err := utils.CreateToken(credentials.UserID, 30, "access")
+	if ok := utils.ComparePassword(user.Password, credentials.Password); !ok {
+		return c.JSON(&fiber.Map{"message": "Invalid Credentials"})
+	}
+
+	config, err := config.GetConfig()
+	if err != nil {
+		log.Fatalf("failed to load configuration: %v", err)
+	}
+	accessTokenDuration, err := strconv.Atoi(config.JWTAccessExp)
+	if err != nil {
+		log.Fatalf("Invalid env format: %v", err)
+	}
+	fmt.Println(accessTokenDuration)
+	accessToken, err := utils.CreateToken(credentials.UserID, accessTokenDuration, config.JWTAccessSecret)
 	if err != nil {
 		c.JSON(&fiber.Map{"message": "Unable to create token"})
 		return err
 	}
-	refreshToken, err := utils.CreateToken(credentials.UserID, 30*24*60, "refresh")
+
+	refreshTokenDuration, err := strconv.Atoi(config.JWTRefreshExp)
+	if err != nil {
+		log.Fatalf("Invalid env format: %v", err)
+	}
+	refreshToken, err := utils.CreateToken(credentials.UserID, refreshTokenDuration, config.JWTRefreshSecret)
 	if err != nil {
 		c.JSON(&fiber.Map{"message": "Unable to create token"})
 		return err
 	}
+
 	token := &TokenResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}
-	c.JSON(&fiber.Map{"message": "Login successful", "token": token})
+	// c.JSON(&fiber.Map{"message": "Login successful", "token": token})
+	Responses.Response(c, 200, true, "Login Successfully", token)
 	return nil
 }
 
@@ -90,13 +116,22 @@ func Refresh(c *fiber.Ctx) error {
 	if !ok {
 		return Responses.Unauthorized(c)
 	}
+
+	config, err := config.GetConfig()
+	if err != nil {
+		log.Fatalf("failed to load configuration: %v", err)
+	}
+	accessTokenDuration, err := strconv.Atoi(config.JWTAccessExp)
+	if err != nil {
+		log.Fatalf("Invalid env format: %v", err)
+	}
+
 	id := claims["id"].(float64)
-	newAccessToken, err := utils.CreateToken(uint(id), 30, "access")
+	newAccessToken, err := utils.CreateToken(uint(id), accessTokenDuration, config.JWTAccessSecret)
 	if err != nil {
 		c.JSON(&fiber.Map{"message": "Unable to create user"})
 		return err
 	}
-
 	token := &TokenResponse{
 		AccessToken:  newAccessToken,
 		RefreshToken: tokenString,

@@ -28,12 +28,7 @@ func IsAuthenticated(c *fiber.Ctx) error { //
 		log.Fatalf("failed to load configuration: %v", err)
 	}
 	// Parse the token
-<<<<<<< HEAD
-	secret := storage.Config.JWTAccessSecret
-	token, err := utils.VerifyToken(tokenString, secret)
-=======
 	token, err := utils.VerifyToken(tokenString, config.JWTAccessSecret)
->>>>>>> e797f03d26ced5108895c7652c3680fb1210e8b4
 
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -62,14 +57,13 @@ func IsAuthorized(c *fiber.Ctx) error {
 
 	// Remove "Bearer " prefix if present
 	tokenString = strings.Replace(tokenString, "Bearer ", "", 1)
-
 	// Load configuration
 	config, err := config.GetConfig()
 	if err != nil {
 		log.Fatalf("failed to load configuration: %v", err)
 	}
 	// Parse the token
-	token, err := utils.VerifyToken(tokenString,config.JWTRefreshSecret)
+	token, err := utils.VerifyToken(tokenString, config.JWTRefreshSecret)
 
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{

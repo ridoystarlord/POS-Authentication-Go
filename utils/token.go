@@ -13,8 +13,7 @@ func CreateToken(id uint, exp int, secret string) (string, error) {
 			"id":  id,
 			"exp": time.Now().Add(time.Minute * time.Duration(exp)).Unix(),
 		})
-	secretKey := []byte(secret)
-	tokenString, err := token.SignedString(secretKey)
+	tokenString, err := token.SignedString([]byte(secret))
 	if err != nil {
 		return "", err
 	}
@@ -24,7 +23,7 @@ func CreateToken(id uint, exp int, secret string) (string, error) {
 
 func VerifyToken(tokenString string, secret string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return secret, nil
+		return []byte(secret), nil
 	})
 
 	if err != nil {

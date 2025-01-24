@@ -1,65 +1,96 @@
 package controllers
 
 import (
+	DBManager "authentication/Database"
+	"authentication/Responses"
 	"authentication/models"
-	"authentication/storage"
 	"authentication/utils"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-//  ListBooks godoc
-//	@Summary		Login
-//	@Description	Login
-//	@Tags			Authentication
-//	@Accept			json
-//	@Produce		json
-//	@Param			request	body	models.Credential	true	"Login"
-//	@Success		200
-//	@Router			/api/v1/auth/login [post]
-func  Login(c *fiber.Ctx) error {
-	var credentials models.Credential
-	err := c.BodyParser(&credentials)
-	if  err != nil {
-		 c.JSON(&fiber.Map{"message":"Unable to parse body"})
-		 return err
-	}
-	err=storage.DB.Where("username = ?", credentials.Username).First(&credentials).Error
+//	 ListBooks godoc
+//		@Summary		Login
+//		@Description	Login
+//		@Tags			Authentication
+//		@Accept			json
+//		@Produce		json
+//		@Param			request	body	models.Credential	true	"Login"
+//		@Success		200
+//		@Router			/api/v1/auth/login [post]
+func Login(c *fiber.Ctx) error {
+	var inputCredentials, userCredential models.Credential
+	err := c.BodyParser(&inputCredentials)
 	if err != nil {
-		c.JSON(&fiber.Map{"message":"Unable to find user"})
-		 return err
+		return Responses.BadRequest(c, "Unable to parse body")
 	}
-	token, err := utils.CreateToken(credentials.UserID,30)
+
+	err = DBManager.DB.Where("username = ?", inputCredentials.Username).First(&userCredential).Error
 	if err != nil {
-		c.JSON(&fiber.Map{"message":"Unable to create token"})
-		 return err
+		return Responses.Unauthorized(c)
 	}
-	c.JSON(&fiber.Map{"message":"Login successful","token":token})
+	if ok := utils.ComparePassword(userCredential.Password, inputCredentials.Password); !ok {
+		return Responses.Unauthorized(c)
+	}
+
+	fmt.Println(userCredential.UserID)
+	accessToken, refreshToken, err := utils.GenerateTokenPair(userCredential.UserID)
+	if err != nil {
+		return Responses.InternalServerError(c)
+	}
+	result := DBManager.DB.Model(&userCredential).Update("refresh_token", refreshToken)
+	if result.Error != nil {
+		return Responses.InternalServerError(c)
+	}
+
+	data := map[string]interface{}{}
+	data["accessToken"] = accessToken
+	data["refreshToken"] = refreshToken
+	data["warehouseId"] = ""
+	data["organizationId"] = ""
+	data["type"] = ""
+
+	Responses.Response(c, 200, true, "Login Successfully", data)
 	return nil
 }
 
-//  ListBooks godoc
-//	@Summary		Create user
-//	@Description	Create a new user
-//	@Tags			Authentication
-//	@Accept			json
-//	@Produce		json
-//	@Param			request	body	models.User	true	"Register"
-//	@Success		200
-//	@Router			/api/v1/auth/register [post]
-func  Register(c *fiber.Ctx) error {
-	var payload models.User
-	err := c.BodyParser(&payload)
-	if  err != nil {
-		 c.JSON(&fiber.Map{"message":"Unable to parse body"})
-		 return err
+func RefreshToken(c *fiber.Ctx) error {
+	var credentials models.Credential
+	payload := c.Locals("payload")
+	userId := payload.(float64)
+	credentials.UserID = uint(userId)
+
+	accessToken, refreshToken, err := utils.GenerateTokenPair(credentials.UserID)
+	if err != nil {
+		return Responses.InternalServerError(c)
 	}
-	payload.Credential.Password = utils.HashPassword(payload.Credential.Password)
-	err=storage.DB.Create(&payload).Error
-	if err!= nil {
-		c.JSON(&fiber.Map{"message":"Unable to create user"})
-		 return err
+
+	result := DBManager.DB.Model(&credentials).Where("user_id = ?", credentials.UserID).Update("refresh_token", refreshToken)
+	if result.Error != nil {
+		return Responses.InternalServerError(c)
 	}
-	c.JSON(&fiber.Map{"message":"User created successfully"})
+
+	data := map[string]interface{}{}
+	data["accessToken"] = accessToken
+	data["refreshToken"] = refreshToken
+	data["warehouseId"] = ""
+	data["organizationId"] = ""
+	data["type"] = ""
+	Responses.Response(c, 200, true, "Access Token Refreshed", data)
+	return nil
+}
+
+func Logout(c *fiber.Ctx) error {
+	var credentials models.Credential
+	payload := c.Locals("payload")
+
+	userId := payload.(float64)
+	credentials.UserID = uint(userId)
+	result := DBManager.DB.Model(&credentials).Where("user_id = ?", credentials.UserID).Update("refresh_token", nil)
+	if result.Error != nil {
+		return Responses.InternalServerError(c)
+	}
+	Responses.Response(c, 200, true, "Logout Successfully", nil)
 	return nil
 }

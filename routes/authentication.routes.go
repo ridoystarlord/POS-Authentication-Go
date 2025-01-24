@@ -9,6 +9,6 @@ import (
 
 func SetupAuthRoutes(route fiber.Router) {
 	route.Post("/login", controllers.Login)
-	route.Post("/register", controllers.Register)
 	route.Get("/refresh", middleware.IsAuthorized, controllers.RefreshToken)
+	route.Post("/logout", middleware.IsAuthenticated, controllers.Logout)
 }

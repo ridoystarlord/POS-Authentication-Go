@@ -10,11 +10,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type tokenPair struct {
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
-}
-
 func CreateToken(id uint, exp int, secret string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{

@@ -7,17 +7,13 @@ import (
 	"gorm.io/gorm"
 )
 
+func MigrateDB(db *gorm.DB) {
 
-func MigrateDB(db *gorm.DB){
-	err :=models.MigrateBook(DB)
+	err := models.MigrateUser(DB)
 	if err != nil {
 		log.Fatal("Unable to migrate database")
 	}
-	err =models.MigrateUser(DB)
-	if err != nil {
-		log.Fatal("Unable to migrate database")
-	}
-	err =models.MigrateCredential(DB)
+	err = models.MigrateCredential(DB)
 	if err != nil {
 		log.Fatal("Unable to migrate database")
 	}

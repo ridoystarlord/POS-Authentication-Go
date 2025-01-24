@@ -5,6 +5,7 @@ import (
 	"authentication/Responses"
 	"authentication/models"
 	"authentication/utils"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -19,27 +20,31 @@ import (
 //		@Success		200
 //		@Router			/api/v1/auth/login [post]
 func Login(c *fiber.Ctx) error {
-	var credentials models.Credential
-	var user models.Credential
-	err := c.BodyParser(&credentials)
+	var inputCredentials, userCredential models.Credential
+	err := c.BodyParser(&inputCredentials)
 	if err != nil {
 		return Responses.BadRequest(c, "Unable to parse body")
 	}
 
-	err = DBManager.DB.Where("username = ?", credentials.Username).First(&user).Error
+	err = DBManager.DB.Where("username = ?", inputCredentials.Username).First(&userCredential).Error
 	if err != nil {
 		return Responses.Unauthorized(c)
 	}
-	if ok := utils.ComparePassword(user.Password, credentials.Password); !ok {
+	if ok := utils.ComparePassword(userCredential.Password, inputCredentials.Password); !ok {
 		return Responses.Unauthorized(c)
+	}
+
+	fmt.Println(userCredential.UserID)
+	accessToken, refreshToken, err := utils.GenerateTokenPair(userCredential.UserID)
+	if err != nil {
+		return Responses.InternalServerError(c)
+	}
+	result := DBManager.DB.Model(&userCredential).Update("refresh_token", refreshToken)
+	if result.Error != nil {
+		return Responses.InternalServerError(c)
 	}
 
 	data := map[string]interface{}{}
-	accessToken, refreshToken, err := utils.GenerateTokenPair(credentials.UserID)
-	if err != nil {
-		return Responses.SomethingGoneWrong(c)
-	}
-
 	data["accessToken"] = accessToken
 	data["refreshToken"] = refreshToken
 	data["warehouseId"] = ""
@@ -50,47 +55,42 @@ func Login(c *fiber.Ctx) error {
 	return nil
 }
 
-//	 ListBooks godoc
-//		@Summary		Create user
-//		@Description	Create a new user
-//		@Tags			Authentication
-//		@Accept			json
-//		@Produce		json
-//		@Param			request	body	models.User	true	"Register"
-//		@Success		200
-//		@Router			/api/v1/auth/register [post]
-func Register(c *fiber.Ctx) error {
-	var payload models.User
-	err := c.BodyParser(&payload)
-	if err != nil {
-		c.JSON(&fiber.Map{"message": "Unable to parse body"})
-		return err
-	}
-	payload.Credential.Password = utils.HashPassword(payload.Credential.Password)
-	err = DBManager.DB.Create(&payload).Error
-	if err != nil {
-		c.JSON(&fiber.Map{"message": "Unable to create user"})
-		return err
-	}
-	Responses.Created(c, "user", nil)
-	return nil
-}
-
 func RefreshToken(c *fiber.Ctx) error {
+	var credentials models.Credential
 	payload := c.Locals("payload")
-
 	userId := payload.(float64)
-	data := map[string]interface{}{}
+	credentials.UserID = uint(userId)
 
-	accessToken, refreshToken, err := utils.GenerateTokenPair(uint(userId))
+	accessToken, refreshToken, err := utils.GenerateTokenPair(credentials.UserID)
 	if err != nil {
 		return Responses.InternalServerError(c)
 	}
+
+	result := DBManager.DB.Model(&credentials).Where("user_id = ?", credentials.UserID).Update("refresh_token", refreshToken)
+	if result.Error != nil {
+		return Responses.InternalServerError(c)
+	}
+
+	data := map[string]interface{}{}
 	data["accessToken"] = accessToken
 	data["refreshToken"] = refreshToken
 	data["warehouseId"] = ""
 	data["organizationId"] = ""
 	data["type"] = ""
 	Responses.Response(c, 200, true, "Access Token Refreshed", data)
+	return nil
+}
+
+func Logout(c *fiber.Ctx) error {
+	var credentials models.Credential
+	payload := c.Locals("payload")
+
+	userId := payload.(float64)
+	credentials.UserID = uint(userId)
+	result := DBManager.DB.Model(&credentials).Where("user_id = ?", credentials.UserID).Update("refresh_token", nil)
+	if result.Error != nil {
+		return Responses.InternalServerError(c)
+	}
+	Responses.Response(c, 200, true, "Logout Successfully", nil)
 	return nil
 }

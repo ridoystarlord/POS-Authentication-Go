@@ -21,7 +21,7 @@ import (
 //		@Router			/api/v1/auth/login [post]
 func Login(c *fiber.Ctx) error {
 	var userCredential models.Credential
-	var inputCredentials dto.InputCredentials
+	var inputCredentials dto.LoginRequestDTO
 	err := c.BodyParser(&inputCredentials)
 	if err != nil {
 		return Responses.BadRequest(c, "Unable to parse body")
@@ -44,7 +44,7 @@ func Login(c *fiber.Ctx) error {
 		return Responses.InternalServerError(c)
 	}
 
-	var data dto.AuthResponse
+	var data dto.AuthResponseDTO
 	data.AccessToken = accessToken
 	data.RefreshToken = refreshToken
 	data.WarehouseId = ""
@@ -71,7 +71,7 @@ func RefreshToken(c *fiber.Ctx) error {
 		return Responses.InternalServerError(c)
 	}
 
-	var data dto.AuthResponse
+	var data dto.AuthResponseDTO
 	data.AccessToken = accessToken
 	data.RefreshToken = refreshToken
 	data.WarehouseId = ""

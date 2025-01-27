@@ -3,9 +3,9 @@ package controllers
 import (
 	DBManager "authentication/Database"
 	"authentication/Responses"
+	"authentication/dto"
 	"authentication/models"
 	"authentication/utils"
-	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -20,7 +20,8 @@ import (
 //		@Success		200
 //		@Router			/api/v1/auth/login [post]
 func Login(c *fiber.Ctx) error {
-	var inputCredentials, userCredential models.Credential
+	var userCredential models.Credential
+	var inputCredentials dto.InputCredentials
 	err := c.BodyParser(&inputCredentials)
 	if err != nil {
 		return Responses.BadRequest(c, "Unable to parse body")
@@ -34,7 +35,6 @@ func Login(c *fiber.Ctx) error {
 		return Responses.Unauthorized(c)
 	}
 
-	fmt.Println(userCredential.UserID)
 	accessToken, refreshToken, err := utils.GenerateTokenPair(userCredential.UserID)
 	if err != nil {
 		return Responses.InternalServerError(c)
@@ -44,12 +44,12 @@ func Login(c *fiber.Ctx) error {
 		return Responses.InternalServerError(c)
 	}
 
-	data := map[string]interface{}{}
-	data["accessToken"] = accessToken
-	data["refreshToken"] = refreshToken
-	data["warehouseId"] = ""
-	data["organizationId"] = ""
-	data["type"] = ""
+	var data dto.AuthResponse
+	data.AccessToken = accessToken
+	data.RefreshToken = refreshToken
+	data.WarehouseId = ""
+	data.OrganizationId = ""
+	data.Type = ""
 
 	Responses.Response(c, 200, true, "Login Successfully", data)
 	return nil
@@ -71,12 +71,13 @@ func RefreshToken(c *fiber.Ctx) error {
 		return Responses.InternalServerError(c)
 	}
 
-	data := map[string]interface{}{}
-	data["accessToken"] = accessToken
-	data["refreshToken"] = refreshToken
-	data["warehouseId"] = ""
-	data["organizationId"] = ""
-	data["type"] = ""
+	var data dto.AuthResponse
+	data.AccessToken = accessToken
+	data.RefreshToken = refreshToken
+	data.WarehouseId = ""
+	data.OrganizationId = ""
+	data.Type = ""
+
 	Responses.Response(c, 200, true, "Access Token Refreshed", data)
 	return nil
 }
